@@ -1,96 +1,116 @@
-import java.time.Year;
+import java.io.Serializable;
 
-public class Student {
-    private String maSV;
-    private String hoTen;
-    private int namSinh;
-    private String diaChi;
+// BƯỚC 1: Phải "đánh dấu" lớp này là có thể Tuần tự hóa
+public class Student implements Serializable {
+    
+    // BƯỚC 2: (Good practice) Thêm serialVersionUID để đảm bảo
+    // phiên bản lớp khi Ghi và Đọc là nhất quán.
+    private static final long serialVersionUID = 1L;
+    
+    private String id;
+    private String name;
+    private double gpa;
 
-    public Student(String maSV, String hoTen) {
-        this.maSV = maSV;
-        this.hoTen = hoTen;
+    public Student(String id, String name, double gpa) {
+        this.id = id;
+        this.name = name;
+        this.gpa = gpa;
     }
 
-    public Student(String maSV, String hoTen, int namSinh, String diaChi) {
-        this.maSV = maSV;
-        this.hoTen = hoTen;
-        this.namSinh = namSinh;
-        this.diaChi = diaChi;
-    }
-
-    public String getMaSV() {
-        return maSV;
-    }
-
-    public void setMaSV(String maSV) {
-        this.maSV = maSV;
-    }
-
-    public String getHoTen() {
-        return hoTen;
-    }
-
-    public void setHoTen(String hoTen) {
-        this.hoTen = hoTen;
-    }
-
-    public int getNamSinh() {
-        return namSinh;
-    }
-
-    public void setNamSinh(int namSinh) {
-        this.namSinh = namSinh;
-    }
-
-    public String getDiaChi() {
-        return diaChi;
-    }
-
-    public void setDiaChi(String diaChi) {
-        this.diaChi = diaChi;
-    }
-
-    public int tinhTuoi() {
-        int namHienTai = Year.now().getValue();
-        return namHienTai - namSinh;
-    }
-
-    public void hienThiThongTin() {
-        System.out.println("- Ma sinh vien: " + maSV);
-        System.out.println("- Ho ten: " + hoTen);
-        System.out.println("- Nam sinh: " + namSinh);
-        System.out.println("- Dia chi: " + diaChi);
-    }
-
-    public static void main(String[] args) {
-        Student sv = new Student("151234", "Nguyen Van A", 1997, "123 Nguyen Trai, Thanh Xuan, Ha Noi");
-
-        System.out.println("Thong tin sinh vien:");
-        sv.hienThiThongTin();
-        System.out.println("Tuoi cua sinh vien: " + sv.tinhTuoi() + " tuoi");
+    // BƯỚC 3: Thêm hàm toString() để có thể in ra kiểm tra
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", gpa=" + gpa +
+                '}';
     }
 }
 
-/*----------------------------------
-+----------------------------------+
-|            Student               |
-+----------------------------------+
-| - maSV: String                   |
-| - hoTen: String                  |
-| - namSinh: int                   |
-| - diaChi: String                 |
-+----------------------------------+
-| + Student(maSV: String, hoTen: String) |
-| + Student(maSV: String, hoTen: String, namSinh: int, diaChi: String) |
-| + getMaSV(): String              |
-| + setMaSV(maSV: String): void    |
-| + getHoTen(): String             |
-| + setHoTen(hoTen: String): void  |
-| + getNamSinh(): int              |
-| + setNamSinh(namSinh: int): void |
-| + getDiaChi(): String            |
-| + setDiaChi(diaChi: String): void|
-| + tinhTuoi(): int                |
-| + hienThiThongTin(): void        |
-+----------------------------------+
------------------------------------*/
+
+________________________________________
+File 2: Chương trình Ghi và Đọc
+Đây là file main thực hiện việc lưu và tải.
+MainApp.java
+Java
+import java.io.*;
+import java.util.ArrayList;
+
+public class MainApp {
+    
+    private static final String FILENAME = "students.dat";
+
+    public static void main(String[] args) {
+        // 1. Tạo dữ liệu mẫu (Một danh sách các đối tượng)
+        ArrayList<Student> listToWrite = new ArrayList<>();
+        listToWrite.add(new Student("B21DCCN001", "An Nguyen", 3.2));
+        listToWrite.add(new Student("B21DCCN002", "Binh Le", 2.8));
+        listToWrite.add(new Student("B21DCCN003", "Chi Pham", 3.5));
+
+        // 2. GỌI HÀM GHI FILE
+        writeObjectsToFile(listToWrite);
+        
+        // 3. GỌI HÀM ĐỌC FILE
+        ArrayList<Student> listFromRead = readObjectsFromFile();
+        
+        // 4. KIỂM CHỨNG KẾT QUẢ
+        System.out.println("\n--- Dữ liệu đã đọc từ file " + FILENAME + ": ---");
+        if (listFromRead != null) {
+            for (Student s : listFromRead) {
+                System.out.println(s);
+            }
+        }
+    }
+
+    /**
+     * Ghi một ArrayList các đối tượng Student xuống file.
+     * @param studentList Danh sách cần ghi
+     */
+    public static void writeObjectsToFile(ArrayList<Student> studentList) {
+        System.out.println("--- Bắt đầu GHI file: " + FILENAME + " ---");
+        
+        // Sử dụng try-with-resources để tự động đóng stream
+        try (FileOutputStream fos = new FileOutputStream(FILENAME);
+             ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+            
+            // GHI TOÀN BỘ ArrayList xuống file CHỈ BẰNG 1 LỆNH
+            oos.writeObject(studentList);
+            
+            System.out.println("Ghi file thành công!");
+            
+        } catch (IOException e) {
+            System.out.println("Lỗi khi ghi file: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Đọc một ArrayList các đối tượng Student từ file.
+     * @return Danh sách đã đọc, hoặc null nếu có lỗi.
+     */
+    public static ArrayList<Student> readObjectsFromFile() {
+        System.out.println("\n--- Bắt đầu ĐỌC file: " + FILENAME + " ---");
+        
+        ArrayList<Student> studentList = null;
+        
+        try (FileInputStream fis = new FileInputStream(FILENAME);
+             ObjectInputStream ois = new ObjectInputStream(fis)) {
+            
+            // ĐỌC TOÀN BỘ ArrayList lên CHỈ BẰNG 1 LỆNH
+            // Cần ép kiểu (cast) về đúng kiểu dữ liệu ban đầu
+            studentList = (ArrayList<Student>) ois.readObject();
+            
+            System.out.println("Đọc file thành công!");
+            
+        } catch (FileNotFoundException e) {
+            System.out.println("Lỗi: Không tìm thấy file " + FILENAME);
+        } catch (IOException | ClassNotFoundException e) {
+            // ClassNotFoundException xảy ra nếu lớp Student không được tìm thấy
+            System.out.println("Lỗi khi đọc file: " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        return studentList;
+    }
+}
